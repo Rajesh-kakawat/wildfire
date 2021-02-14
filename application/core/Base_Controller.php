@@ -71,7 +71,8 @@ class Base_Controller extends MX_Controller
      *      autoload it through the config/autoload file.
      */
     public $autoload = array(
-        // 'libraries' => array('settings/settings_lib', 'events'),
+        //'libraries' => array('settings/settings_lib', 'events'),
+        'libraries' => array('settings/settings_lib'),
         'helpers' => array('application'),
         'models' => array()
     );

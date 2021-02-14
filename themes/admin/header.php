@@ -13,11 +13,8 @@ Assets::add_js($inline, 'inline');
 <head>
     <meta charset="utf-8">
     <title><?php
-        /*
         echo isset($page_title) ? "{$page_title} : " : '';
         e(class_exists('Settings_lib') ? settings_item('site.title') : 'Bonfire');
-        */
-        echo 'Wilffire';
     ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="<?php e(isset($meta_description) ? $meta_description : ''); ?>">
