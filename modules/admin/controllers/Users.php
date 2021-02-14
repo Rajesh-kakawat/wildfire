@@ -5,7 +5,7 @@
  * @property Ion_auth|Ion_auth_model $ion_auth        The ION Auth spark
  * @property CI_Form_validation      $form_validation The form validation library
  */
-class Users extends Front_Controller
+class Users extends Admin_Controller
 {
 	public $data = [];
 
@@ -30,7 +30,7 @@ class Users extends Front_Controller
 		if (!$this->ion_auth->logged_in())
 		{
 			// redirect them to the login page
-			redirect('users/login', 'refresh');
+			redirect('admin/login', 'refresh');
 		}
 		else if (!$this->ion_auth->is_admin()) // remove this elseif if you want to enable this for non-admins
 		{
@@ -55,7 +55,9 @@ class Users extends Front_Controller
 				$this->data['users'][$k]->groups = $this->ion_auth->get_users_groups($user->id)->result();
 			}
 
-			$this->_render_page('users' . DIRECTORY_SEPARATOR . 'index', $this->data);
+			$this->_render_page('admin' . DIRECTORY_SEPARATOR . 'index', $this->data);
+			Template::set_theme('admin');
+			Template::render();
 			
 		}
 	}
@@ -109,7 +111,6 @@ class Users extends Front_Controller
 				'id' => 'password',
 				'type' => 'password',
 			];
-			Template::set_theme('admin');
 			Template::set('page_title', 'Login');
 			//$this->_render_page('users' . DIRECTORY_SEPARATOR . 'login', $this->data);
 			Template::set('message', $this->data['message']);
@@ -436,9 +437,8 @@ class Users extends Front_Controller
 			$this->data['csrf'] = $this->_get_csrf_nonce();
 			$this->data['user'] = $this->ion_auth->user($id)->row();
 			$this->data['identity'] = $this->config->item('identity', 'ion_auth');
-
-			$this->_render_page('auth' . DIRECTORY_SEPARATOR . 'deactivate_user', $this->data);
-		}
+			$this->_render_page(SITE_AREA.'/users' . DIRECTORY_SEPARATOR . 'deactivate_user', $this->data);
+     	}
 		else
 		{
 			// do we really want to deactivate?
@@ -460,6 +460,7 @@ class Users extends Front_Controller
 			// redirect them back to the auth page
 			redirect('auth', 'refresh');
 		}
+
 	}
 
 	/**
@@ -471,7 +472,7 @@ class Users extends Front_Controller
 
 		if (!$this->ion_auth->logged_in() || !$this->ion_auth->is_admin())
 		{
-			redirect('auth', 'refresh');
+			redirect(SITE_AREA.'/users/login', 'refresh');
 		}
 
 		$tables = $this->config->item('tables', 'ion_auth');
@@ -479,8 +480,8 @@ class Users extends Front_Controller
 		$this->data['identity_column'] = $identity_column;
 
 		// validate form input
-		$this->form_validation->set_rules('first_name', $this->lang->line('create_user_validation_fname_label'), 'trim|required');
-		$this->form_validation->set_rules('last_name', $this->lang->line('create_user_validation_lname_label'), 'trim|required');
+		$this->form_validation->set_rules('first_name', $this->lang->line('create_user_validation_fname_label'), 'trim|required|max_length[15]');
+		$this->form_validation->set_rules('last_name', $this->lang->line('create_user_validation_lname_label'), 'trim|required|max_length[15]');
 		if ($identity_column !== 'email')
 		{
 			$this->form_validation->set_rules('identity', $this->lang->line('create_user_validation_identity_label'), 'trim|required|is_unique[' . $tables['users'] . '.' . $identity_column . ']');
@@ -490,7 +491,7 @@ class Users extends Front_Controller
 		{
 			$this->form_validation->set_rules('email', $this->lang->line('create_user_validation_email_label'), 'trim|required|valid_email|is_unique[' . $tables['users'] . '.email]');
 		}
-		$this->form_validation->set_rules('phone', $this->lang->line('create_user_validation_phone_label'), 'trim');
+		$this->form_validation->set_rules('phone', $this->lang->line('create_user_validation_phone_label'), 'trim|max_length[15]');
 		$this->form_validation->set_rules('company', $this->lang->line('create_user_validation_company_label'), 'trim');
 		$this->form_validation->set_rules('password', $this->lang->line('create_user_validation_password_label'), 'required|min_length[' . $this->config->item('min_password_length', 'ion_auth') . ']|matches[password_confirm]');
 		$this->form_validation->set_rules('password_confirm', $this->lang->line('create_user_validation_password_confirm_label'), 'required');
@@ -513,7 +514,7 @@ class Users extends Front_Controller
 			// check to see if we are creating the user
 			// redirect them back to the admin page
 			$this->session->set_flashdata('message', $this->ion_auth->messages());
-			redirect("auth", 'refresh');
+			redirect(SITE_AREA."/users/login", 'refresh');
 		}
 		else
 		{
@@ -526,51 +527,60 @@ class Users extends Front_Controller
 				'id' => 'first_name',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('first_name'),
+			    'class'=>empty(form_error('first_name'))?'is-invalid form-control':'form-control',
 			];
 			$this->data['last_name'] = [
 				'name' => 'last_name',
 				'id' => 'last_name',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('last_name'),
+			    'class'=>'form-control',
 			];
 			$this->data['identity'] = [
 				'name' => 'identity',
 				'id' => 'identity',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('identity'),
+			    'class'=>'form-control',
 			];
 			$this->data['email'] = [
 				'name' => 'email',
 				'id' => 'email',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('email'),
+			    'class'=>'form-control',
 			];
 			$this->data['company'] = [
 				'name' => 'company',
 				'id' => 'company',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('company'),
+			    'class'=>'form-control',
 			];
 			$this->data['phone'] = [
 				'name' => 'phone',
 				'id' => 'phone',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('phone'),
+			    'class'=>'form-control',
 			];
 			$this->data['password'] = [
 				'name' => 'password',
 				'id' => 'password',
 				'type' => 'password',
 				'value' => $this->form_validation->set_value('password'),
+			    'class'=>'form-control',
 			];
 			$this->data['password_confirm'] = [
 				'name' => 'password_confirm',
 				'id' => 'password_confirm',
 				'type' => 'password',
 				'value' => $this->form_validation->set_value('password_confirm'),
+			    'class'=>'form-control',
 			];
 
-			$this->_render_page('auth' . DIRECTORY_SEPARATOR . 'create_user', $this->data);
+			$this->_render_page('admin/users' . DIRECTORY_SEPARATOR . 'create_user', $this->data);
+			Template::render();
 		}
 	}
 	/**
@@ -594,7 +604,7 @@ class Users extends Front_Controller
 
 		if (!$this->ion_auth->logged_in() || (!$this->ion_auth->is_admin() && !($this->ion_auth->user()->row()->id == $id)))
 		{
-			redirect('auth', 'refresh');
+		    redirect(SITE_AREA.'/users/login', 'refresh');
 		}
 
 		$user = $this->ion_auth->user($id)->row();
@@ -693,37 +703,44 @@ class Users extends Front_Controller
 			'id'    => 'first_name',
 			'type'  => 'text',
 			'value' => $this->form_validation->set_value('first_name', $user->first_name),
+		    'class'=>'form-control',
 		];
 		$this->data['last_name'] = [
 			'name'  => 'last_name',
 			'id'    => 'last_name',
 			'type'  => 'text',
 			'value' => $this->form_validation->set_value('last_name', $user->last_name),
+		    'class'=>'form-control',
 		];
 		$this->data['company'] = [
 			'name'  => 'company',
 			'id'    => 'company',
 			'type'  => 'text',
 			'value' => $this->form_validation->set_value('company', $user->company),
+		    'class'=>'form-control',
 		];
 		$this->data['phone'] = [
 			'name'  => 'phone',
 			'id'    => 'phone',
 			'type'  => 'text',
 			'value' => $this->form_validation->set_value('phone', $user->phone),
+		    'class'=>'form-control',
 		];
 		$this->data['password'] = [
 			'name' => 'password',
 			'id'   => 'password',
-			'type' => 'password'
+			'type' => 'password',
+            'class'=>'form-control',
 		];
 		$this->data['password_confirm'] = [
 			'name' => 'password_confirm',
 			'id'   => 'password_confirm',
-			'type' => 'password'
+			'type' => 'password',
+		    'class'=>'form-control',
 		];
 
-		$this->_render_page('auth/edit_user', $this->data);
+		$this->_render_page(SITE_AREA.'/users/edit_user', $this->data);
+		Template::render();
 	}
 
 	/**
@@ -735,7 +752,7 @@ class Users extends Front_Controller
 
 		if (!$this->ion_auth->logged_in() || !$this->ion_auth->is_admin())
 		{
-			redirect('auth', 'refresh');
+		    redirect(SITE_AREA.'/users/login', 'refresh');
 		}
 
 		// validate form input
@@ -749,7 +766,7 @@ class Users extends Front_Controller
 				// check to see if we are creating the group
 				// redirect them back to the admin page
 				$this->session->set_flashdata('message', $this->ion_auth->messages());
-				redirect("auth", 'refresh');
+				redirect(SITE_AREA."/users/login", 'refresh');
 			}
 			else
             		{
@@ -774,7 +791,8 @@ class Users extends Front_Controller
 			'value' => $this->form_validation->set_value('description'),
 		];
 
-		$this->_render_page('auth/create_group', $this->data);
+		$this->_render_page(SITE_AREA.'/users/create_group', $this->data);
+		Template::render('');
 		
 	}
 
@@ -846,7 +864,8 @@ class Users extends Front_Controller
 			'value' => $this->form_validation->set_value('group_description', $group->description),
 		];
 
-		$this->_render_page('auth' . DIRECTORY_SEPARATOR . 'edit_group', $this->data);
+		$this->_render_page(SITE_AREA.'/users' . DIRECTORY_SEPARATOR . 'edit_group', $this->data);
+		Template::render();
 	}
 
 	/**
